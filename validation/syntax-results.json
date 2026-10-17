@@ -1,7 +1,7 @@
 {
   "parser": "Acorn 8.17.0",
   "grammar": "ECMAScript 2019; boot and recovery scripts also ES5 (not a complete Safari 12 engine)",
-  "files": 19,
+  "files": 21,
   "recoveryScripts": 2,
   "failures": [],
   "baselineFailures": [

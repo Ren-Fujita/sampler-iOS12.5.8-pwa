@@ -1,0 +1,26 @@
+[
+  {
+    "input": "aac-video.mp4",
+    "outputType": [
+      "audio"
+    ],
+    "codec": "aac",
+    "sourcePcmBytes": 132300,
+    "extractedPcmBytes": 132300,
+    "pcmIdentical": true,
+    "rms": 0.0884086531266711,
+    "outputSha256": "54b5399f6659c232f65e56abae1c22ea02419ed4a654f360a0e50467250c6f63"
+  },
+  {
+    "input": "aac-video.mov",
+    "outputType": [
+      "audio"
+    ],
+    "codec": "aac",
+    "sourcePcmBytes": 132300,
+    "extractedPcmBytes": 132300,
+    "pcmIdentical": true,
+    "rms": 0.08830866796500224,
+    "outputSha256": "a57c3de526f19e38b67ef5f37588e9972a6c9e39f5808b2426f078d0a6d9f0b2"
+  }
+]

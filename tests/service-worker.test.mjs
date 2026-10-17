@@ -6,6 +6,7 @@ import vm from 'node:vm';
 const root = new URL('../', import.meta.url);
 const source = await readFile(new URL('sw.js', root), 'utf8');
 const runtimeFiles = ['index.html', 'styles.css', 'pwa.js', 'manifest.webmanifest',
+  'js/media-unlock.js', 'js/video-audio.js', 'audio/silence.wav',
   'js/app.js', 'js/config.js', 'js/sample.js', 'js/presets.js', 'js/session.js',
   'js/session-storage.js', 'js/backup-codec.js', 'js/audio-utils.js',
   'js/waveform.js', 'js/master-volume.js', 'js/layout.js', 'js/file-compat.js', 'js/input-compat.js', 'js/boot.js', 'js/autosave.js', 'js/edit-transport.js', 'js/voice-store.js',
@@ -33,7 +34,7 @@ function environment(scope, brokenFile) {
     const relative = request.url.slice(scope.length);
     const body = await readFile(new URL(relative, root));
     const type = relative.endsWith('.html') ? 'text/html' : relative.endsWith('.css') ? 'text/css'
-      : relative.endsWith('.js') ? 'text/javascript' : relative.endsWith('.png') ? 'image/png' : 'application/manifest+json';
+      : relative.endsWith('.js') ? 'text/javascript' : relative.endsWith('.png') ? 'image/png' : relative.endsWith('.wav') ? 'audio/wav' : 'application/manifest+json';
     return { body, ok: relative !== brokenFile, redirected: false, headers: { get: () => type } };
   };
   vm.runInNewContext(source, { self, caches, fetch, Request, URL, Set });

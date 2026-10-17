@@ -1,0 +1,12 @@
+{
+  "aac-video.mp4": {
+    "aacPacketCount": 66,
+    "aacPayloadBytes": 12453,
+    "aacPayloadSha256": "0d19014458e0d6cc4ab7a4f9a3e38fb370b425e501974f321dfaf25537c27c21"
+  },
+  "aac-video.mov": {
+    "aacPacketCount": 66,
+    "aacPayloadBytes": 12422,
+    "aacPayloadSha256": "fd931bcd369c4ede27a56801658ca88c5278cd62ce300abaf6d5621b0879e726"
+  }
+}

@@ -1,0 +1,54 @@
+[
+  {
+    "profile": "native API",
+    "engine": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "checks": [
+      {
+        "name": "factory sound through actual gain/compressor/output graph",
+        "rms": 0.08070155221278574,
+        "pass": true
+      },
+      {
+        "name": "aac-video.mp4",
+        "duration": 1.5,
+        "rate": 48000,
+        "rms": 0.08840933078954294,
+        "pass": true
+      },
+      {
+        "name": "aac-video.mov",
+        "duration": 1.5,
+        "rate": 48000,
+        "rms": 0.08830888347458325,
+        "pass": true
+      }
+    ],
+    "pass": true
+  },
+  {
+    "profile": "older API fallback",
+    "engine": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "checks": [
+      {
+        "name": "factory sound through actual gain/compressor/output graph",
+        "rms": 0.08070155221278574,
+        "pass": true
+      },
+      {
+        "name": "aac-video.mp4",
+        "duration": 1.5,
+        "rate": 48000,
+        "rms": 0.08840933078954294,
+        "pass": true
+      },
+      {
+        "name": "aac-video.mov",
+        "duration": 1.5,
+        "rate": 48000,
+        "rms": 0.08830888347458325,
+        "pass": true
+      }
+    ],
+    "pass": true
+  }
+]

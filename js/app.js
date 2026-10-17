@@ -1,6 +1,8 @@
 import { readBlobBuffer } from './file-compat.js';
+import { isVideoFile, extractVideoAudio } from './video-audio.js';
+import { createMediaUnlock } from './media-unlock.js';
 import { onPointer, capturePointer } from './input-compat.js';
-import { decodeAudio, unlockAudio } from './audio-utils.js';
+import { decodeAudio, unlockAudio, resumeAudioContext } from './audio-utils.js';
 import { createMasterVolume } from './master-volume.js';
 import { createLayout } from './layout.js';
 import { createAutosave } from './autosave.js';
@@ -42,6 +44,7 @@ let chain = null;
 const voiceStore = createVoiceStore();
 let bufferCache = new WeakMap();
 let playEpoch = 0;
+const mediaUnlock = createMediaUnlock({ getNavigator: () => navigator, getDocument: () => document });
 
 // Input and presentation state.
 const heldKeys = new Map();
@@ -155,36 +158,25 @@ function getAudioContext(){
   if (!ctx || ctx.state === 'closed'){
     const Audio = window.AudioContext || window.webkitAudioContext;
     if (!Audio)throw Error('このブラウザはWeb Audioに対応していません。');
-    ctx = new Audio({
-      latencyHint: 'interactive'
-    });
+    try { ctx = new Audio({ latencyHint: 'interactive' }); }
+    catch (error) { ctx = new Audio(); }
     chain = createChain(ctx, ctx.destination, masterVolume.value);
     ctx.addEventListener('statechange', renderVoiceLights)
   }
   return ctx
 }
 async function ensureAudio(){
-  configurePlaybackSession();
+  mediaUnlock.start(configurePlaybackSession());
   const context = getAudioContext();
   unlockAudio(context);
-  if (context.state !== 'running'){
-    let timer;
-    try{
-      await Promise.race([context.resume(), new Promise((_, reject) => {
-        timer = setTimeout(() => reject(Error('音を開始できませんでした。メニューの「音声を復旧」を試してください。')), 2500)
-      })])
-    }finally{
-      clearTimeout(timer)
-    }
-  }
-  if (context.state !== 'running')throw Error('音を開始できませんでした。メニューの「音声を復旧」を試してください。');
+  await resumeAudioContext(context);
   return context
 }
 function resumeAudio(){
   const playing = getVoiceActivity().count > 0;
   if (playing && ctx && ctx.state !== 'running' && ctx.state !== 'closed'){
-    configurePlaybackSession();
-    ctx.resume().catch (() => {
+    mediaUnlock.start(configurePlaybackSession());
+    resumeAudioContext(ctx).catch (() => {
     })
   }
   renderVoiceLights()
@@ -332,6 +324,8 @@ async function playPad(index, options = {
       notify('空のパッドです。取り込みモードで音源を入れてください。');
       return
     }
+    if (masterVolume.value === 0)notify('全体音量が0%です。右のVolumeを上げるかミュートを解除してください。');
+    else if (!options.audition && pads[index].gain === 0)notify('このパッドの音量が0%です。編集モードでサンプル音量を上げてください。');
     if (options.isHeld && pads[index].gate && !options.isHeld())return;
     trigger(index, !!options.audition)
   }catch (e){
@@ -343,6 +337,7 @@ function allStop(){
   resetEditTransport(slot());
   releaseAllVoices();
   clearPerformanceHolds();
+  mediaUnlock.pause();
   renderVoiceLights()
 }
 
@@ -408,8 +403,11 @@ async function importAudio(files, target){
   busy(true);
   try{
     if (file.size > MAX_FILE_BYTES)throw Error('ファイルは200MB以内にしてください。');
-    const context = getAudioContext(),
-    buffer = await decodeAudio(context, await readBlobBuffer(file));
+    const context = getAudioContext();
+    const video = isVideoFile(file);
+    const source = video ? await extractVideoAudio(file, { onProgress: (done, total) => busy(true, '動画から音声を取り出し中… ' + Math.floor(done / (total || 1) * 100) + '%') }) : file;
+    busy(true, video ? '動画の音声を読み込み中…' : '音声を読み込み中…');
+    const buffer = await decodeAudio(context, await readBlobBuffer(source));
     if (buffer.duration > MAX_DURATION)throw Error('音源は10分以内にしてください。');
     if (!buffer.length)throw Error('音声データがありません。');
     const replacement = {
@@ -424,9 +422,12 @@ async function importAudio(files, target){
     markSave(target);
     renderAll();
     await flushSave();
+    $('importStatus').textContent = '最後の取り込み：' + file.name + (autosave.failed ? '（自動保存できませんでした）' : '（取込・保存完了）');
     notify(BANKS[bank] + '.' + String(selected + 1).padStart(2, '0') + ' に取り込みました。' + (autosave.failed ? '\nメニューからバックアップを保存してください。': '\n次回も自動復元します。'))
   }catch (e){
-    notify('取り込めませんでした。元の音源はそのままです。\n' + (e.name === 'EncodingError' ? '対応していない形式、または壊れた音声ファイルです。': e.message))
+    const reason = e.name === 'EncodingError' ? 'この音声形式を端末が読み込めません。動画の場合はAAC音声付きMP4・MOV、またはM4A・MP3・WAVを選んでください。' : e.message;
+    $('importStatus').textContent = '最後の取り込みは失敗しました：' + reason;
+    notify('取り込めませんでした。元の音源はそのままです。\n' + reason, { durationMs:12000 });
   }finally{
     busy(false)
   }
@@ -590,11 +591,11 @@ function deleteCurrent() {
 }
 
 // view.js
-function notify(message){
+function notify(message, { durationMs = 4500 } = {}){
   $('toast').textContent = message;
   $('toast').classList.remove('hidden');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => $('toast').classList.add('hidden'), 4500)
+  toastTimer = setTimeout(() => $('toast').classList.add('hidden'), durationMs)
 }
 function busy(on, message = '音源を読み込み中…'){
   $('busyOverlay').textContent = message;
@@ -688,6 +689,8 @@ function renderImportPreview(previewing){
 }
 function renderVoiceLights(){
   const { count, activePads } = getVoiceActivity();
+  if (!count)mediaUnlock.idle();
+  else mediaUnlock.keepAlive();
   const running = (ctx && ctx.state) === 'running',
   previewing = activePads.has(slot()) || (uiMode === 'edit' && editorTransport().pending);
   $('activeCount').textContent = (count && !running ? '待機中 ': '再生中 ') + count;
@@ -1377,6 +1380,7 @@ function bindMenuControls() {
   $('closeHelp').onclick = () => showPanel('func');
   $('closeBackup').onclick = () => showPanel('func');
   $('recoverAudio').onclick = recoverAudio;
+  $('testAudio').onclick = testAudio;
   $('exportProject').onclick = exportProject;
   $('loadProject').onclick = () => {
     if (!ready || isBusy())return;
@@ -1392,10 +1396,33 @@ function bindMenuControls() {
     }
   };
 }
+async function testAudio() {
+  if (!ready || isBusy())return;
+  if (masterVolume.value === 0) {
+    notify('全体音量が0%です。Volumeを上げるかミュートを解除してから、もう一度テストしてください。');
+    return;
+  }
+  try {
+    const context = await ensureAudio();
+    const oscillator = context.createOscillator(), gain = context.createGain(), time = context.currentTime;
+    oscillator.frequency.value = 440;
+    gain.gain.setValueAtTime(0, time);
+    gain.gain.linearRampToValueAtTime(.25, time + .03);
+    gain.gain.setValueAtTime(.25, time + .25);
+    gain.gain.linearRampToValueAtTime(0, time + .4);
+    oscillator.connect(gain);
+    gain.connect(chain.input);
+    oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); mediaUnlock.idle(); };
+    oscillator.start(time);
+    oscillator.stop(time + .42);
+    notify('短いテスト音を再生します。聞こえない場合は端末の音量・消音スイッチ・Bluetoothの出力先を確認してください。');
+  } catch (error) { notify(error.message); }
+}
 function saveBeforePageHide(){
   finishEditSeek(true);
   pausePlaybackDisplay();
   flushSave();
+  if (!getVoiceActivity().count)mediaUnlock.pause();
 }
 function bindLifecycleEvents() {
   document.addEventListener('visibilitychange', () => {

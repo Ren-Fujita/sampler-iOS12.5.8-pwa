@@ -40,10 +40,10 @@ export function onPointer(element, name, callback) {
   }
 }
 
-// Old WebKit does not orient styled range inputs using writing-mode. Handle
-// coordinates directly while keeping the native input for keyboard/VoiceOver.
+// Use the same vertical geometry on every browser. Pointer Events support does
+// not imply support for vertical native ranges (notably Safari 13 through 17.3).
 export function bindLegacyVolume(input, set) {
-  if (typeof window === 'undefined' || window.PointerEvent)return;
+  if (typeof window === 'undefined')return;
   input.classList.add('legacy-volume');
   let dragging = null;
   const move = event => {
@@ -53,9 +53,10 @@ export function bindLegacyVolume(input, set) {
     if (rect.height > 0)set(Math.max(0, Math.min(1, (rect.bottom - event.clientY) / rect.height)));
   };
   onPointer(input, 'pointerdown', event => {
-    if (dragging !== null)return;
+    if (event.button !== 0 || dragging !== null)return;
     dragging = event.pointerId;
     input.focus();
+    try { capturePointer(input, event.pointerId); } catch (error) {}
     move(event);
   });
   onPointer(input, 'pointermove', move);

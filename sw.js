@@ -2,7 +2,7 @@
 // Change this version whenever any shell file changes.
 const SCOPE_URL = new URL(self.registration.scope);
 const CACHE_PREFIX = 'sx12-app-shell-' + encodeURIComponent(SCOPE_URL.pathname) + '-';
-const CACHE_NAME = CACHE_PREFIX + '2026-10-17-v8-ios12';
+const CACHE_NAME = CACHE_PREFIX + '2026-10-17-v9-audio-video';
 const SHELL = [
   './index.html', './styles.css', './pwa.js', './manifest.webmanifest',
   './js/app.js', './js/config.js', './js/sample.js', './js/presets.js',
@@ -10,6 +10,7 @@ const SHELL = [
   './js/audio-utils.js', './js/waveform.js',
   './js/master-volume.js', './js/layout.js',
   './js/file-compat.js', './js/input-compat.js', './js/boot.js',
+  './js/media-unlock.js', './js/video-audio.js', './audio/silence.wav',
   './js/autosave.js', './js/edit-transport.js', './js/voice-store.js',
   './icons/apple-touch-icon.png', './icons/icon-192.png',
   './icons/icon-512.png', './icons/icon-maskable-512.png'
@@ -22,6 +23,7 @@ function expectedContentType(url, type) {
   if (url.endsWith('.css'))return type.includes('text/css');
   if (url.endsWith('.js'))return /javascript/.test(type);
   if (url.endsWith('.png'))return type.includes('image/png');
+  if (url.endsWith('.wav'))return /audio\/(wav|wave|x-wav|vnd\.wave)|application\/octet-stream/.test(type);
   return /json|manifest/.test(type);
 }
 
