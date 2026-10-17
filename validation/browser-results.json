@@ -1,0 +1,50 @@
+[
+  {
+    "profile": "modern",
+    "engine": "Chromium (not Safari/iOS 12)",
+    "checks": [
+      "12 pads visible within 375x667",
+      "touch unlock and loop playback",
+      "range input changes actual Web Audio master gain; mute restores value",
+      "GATE releases after finger moves outside pad",
+      "file picker, WAV import, rename, trim, sample gain, edit play/pause",
+      "IndexedDB PCM/settings commit and reload restore",
+      "backup downloaded",
+      "exported binary backup restores via file picker",
+      "landscape pads fit viewport",
+      "service worker offline reload at subfolder URL"
+    ],
+    "errors": [],
+    "volume": 0.4000000059604645,
+    "exportBytes": 1732442
+  },
+  {
+    "profile": "ios12-api-fallback",
+    "engine": "Chromium (not Safari/iOS 12)",
+    "checks": [
+      "12 pads visible within 375x667",
+      "touch unlock and loop playback",
+      "touch volume changes actual Web Audio master gain; mute restores value",
+      "GATE releases after finger moves outside pad",
+      "touch trim handle changes source start",
+      "touch waveform seek changes paused cue",
+      "file picker, WAV import, rename, trim, sample gain, edit play/pause",
+      "IndexedDB PCM/settings commit and reload restore",
+      "manual backup link with valid SX12 binary generated (OS save unverified)",
+      "exported binary backup restores via file picker",
+      "landscape pads fit viewport",
+      "service worker offline reload at subfolder URL"
+    ],
+    "errors": [],
+    "volume": 0.3999999761581421,
+    "exportBytes": 1732457
+  },
+  {
+    "profile": "recovery-page",
+    "checks": [
+      "independent update page installs waiting service worker and explicitly activates it",
+      "saved settings survive worker replacement"
+    ],
+    "errors": []
+  }
+]

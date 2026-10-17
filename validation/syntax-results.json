@@ -1,0 +1,41 @@
+{
+  "parser": "Acorn 8.17.0",
+  "grammar": "ECMAScript 2019; boot and recovery scripts also ES5 (not a complete Safari 12 engine)",
+  "files": 19,
+  "recoveryScripts": 2,
+  "failures": [],
+  "baselineFailures": [
+    {
+      "file": "pwa.js",
+      "error": "Unexpected token (18:44)"
+    },
+    {
+      "file": "sw.js",
+      "error": "Unexpected token (83:17)"
+    },
+    {
+      "file": "js/app.js",
+      "error": "Unexpected token (195:13)"
+    },
+    {
+      "file": "js/backup-codec.js",
+      "error": "Unexpected token (34:37)"
+    },
+    {
+      "file": "js/edit-transport.js",
+      "error": "Unexpected token (28:22)"
+    },
+    {
+      "file": "js/layout.js",
+      "error": "Unexpected token (7:47)"
+    },
+    {
+      "file": "js/session.js",
+      "error": "Unexpected token (38:91)"
+    },
+    {
+      "file": "js/voice-store.js",
+      "error": "Unexpected token (11:22)"
+    }
+  ]
+}

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <title>サンプラー</title>
+    <meta name="description" content="音源の取り込み・編集・演奏ができる12パッドサンプラー。ホーム画面とオフラインに対応。">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="サンプラー">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="ios-top-edge-guard" aria-hidden="true"></div>
+    <main class="instrument" id="device" aria-label="サンプラー">
+      <i class="corner-screw" aria-hidden="true"></i>
+      <i class="corner-screw tr" aria-hidden="true"></i>
+      <i class="corner-screw bl" aria-hidden="true"></i>
+      <i class="corner-screw br" aria-hidden="true"></i>
+      <div class="instrument-body" id="face">
+        <header class="instrument-header">
+          <div class="identity">
+            <div class="header-display" id="headerDisplay">
+              <div class="header-waveform is-idle" id="playbackWaveform" role="img" aria-label="再生待機中の空の波形グラフ">
+                <canvas id="playbackWave" aria-hidden="true"></canvas>
+                <span class="header-playhead" id="playbackPlayhead" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="button stop-button" id="stopAll"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="1"/></svg>停止</button>
+            <button class="button icon-only" id="func" aria-label="メニュー" aria-expanded="false" aria-controls="funcPanel"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+          </div>
+        </header>
+        <div class="surface-body">
+          <div class="control-deck">
+            <div class="sample-controls" role="group" aria-label="選択パッドの再生設定">
+              <div class="control-caption">
+                <span class="control-target" id="playbackTarget">A.01</span>
+                <div class="sound-details">
+                  <strong id="playbackReadout">Kick / warm</strong>
+                  <span id="playbackDuration">0.55 s · ONE SHOT</span>
+                </div>
+              </div>
+              <div class="control-toggles">
+                <button class="toggle" id="gate" aria-pressed="false" title="選択したパッドを、押している間だけ再生">GATE</button>
+                <button class="toggle" id="loop" aria-pressed="false" title="選択したパッドを繰り返し再生。もう一度押すと停止">LOOP</button>
+              </div>
+            </div>
+            <nav class="mode-bar" aria-label="操作モード" role="tablist">
+              <button class="mode-button active" id="playMode" role="tab" aria-selected="true" aria-controls="workspace"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7z"/></svg>再生</button>
+              <button class="mode-button" id="importMode" role="tab" aria-selected="false" aria-controls="workspace" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>取り込み</button>
+              <button class="mode-button" id="editMode" role="tab" aria-selected="false" aria-controls="workspace" tabindex="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16 12-12 4 4-12 12-5 1zM14 6l4 4"/></svg>編集</button>
+            </nav>
+            <div class="context-row">
+              <p class="mode-hint" id="modeHint">パッドを押して再生します。</p>
+              <span class="active-count" id="activeCount">再生中 0</span>
+            </div>
+            <div class="bank-row">
+              <span class="bank-label">BANK</span>
+              <div class="banks" id="banks" role="group" aria-label="サンプルバンク"></div>
+            </div>
+          </div>
+          <div class="workspace" id="workspace" role="tabpanel" aria-labelledby="playMode">
+            <div class="pad-grid" id="pads" role="group" aria-label="サンプルパッド"></div>
+            <section class="editor hidden" id="editPanel" aria-label="音源の編集">
+              <div class="editor-head">
+                <h2>サンプル編集</h2>
+                <span class="editor-slot" id="editorSlot">A / 01</span>
+              </div>
+              <label class="sr-only" for="sampleName">音源名</label>
+              <input class="name-input" id="sampleName" type="text" maxlength="80" placeholder="音源名">
+              <div class="editor-meta">
+                <span id="sampleFormat">MONO / 44.1 kHz</span>
+                <span id="editDuration">0.55 s</span>
+              </div>
+              <div class="wave-zone" id="waveZone">
+                <canvas id="wave" aria-label="選択した音源の波形"></canvas>
+                <button class="trim-handle start" id="startHandle" role="slider" aria-label="再生開始位置" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0" style="left:0%"></button>
+                <button class="trim-handle end" id="endHandle" role="slider" aria-label="再生終了位置" aria-valuemin="0" aria-valuemax="1" aria-valuenow="1" style="left:100%"></button>
+                <span class="wave-empty hidden" id="waveEmpty">空のパッドです</span>
+              </div>
+              <div class="wave-times">
+                <span id="startTime">0.000 s</span>
+                <span id="endTime">0.550 s</span>
+              </div>
+              <div class="time-inputs">
+                <div class="field">
+                  <label for="trimStart">開始位置 <span>秒</span></label>
+                  <input id="trimStart" type="number" min="0" step="0.001" value="0">
+                </div>
+                <div class="field">
+                  <label for="trimEnd">終了位置 <span>秒</span></label>
+                  <input id="trimEnd" type="number" min="0" step="0.001" value="0.55">
+                </div>
+              </div>
+              <div class="field parameter">
+                <label for="sampleGain">サンプル音量 <output id="sampleGainOut">100%</output></label>
+                <input id="sampleGain" type="range" min="0" max="150" step="1" value="100">
+              </div>
+              <div class="field parameter">
+                <label for="pitch">ピッチ <output id="pitchOut">0 st</output></label>
+                <input id="pitch" type="range" min="-24" max="24" step="1" value="0">
+              </div>
+              <div class="editor-actions">
+                <button class="button" id="resetSample">編集をリセット</button>
+                <button class="button danger" id="editDelete">音源を削除</button>
+              </div>
+              <p class="editor-note">波形の両端をドラッグして再生範囲を調整。編集は自動保存されます。ピッチを変えると再生速度も変わります。</p>
+            </section>
+          </div>
+          <footer class="performance-footer hidden" id="previewControls">
+            <div class="playback-actions">
+              <button class="button preview-button" id="subPad" aria-label="試聴" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="previewIcon" d="m8 5 11 7-11 7z"/></svg><span id="previewLabel">試聴</span></button>
+              <button class="button preview-button hidden" id="pausePreview" aria-label="選択音源を再生" aria-pressed="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path id="pausePreviewIcon" d="m8 5 11 7-11 7z"/></svg><span id="pausePreviewLabel">再生</span></button>
+            </div>
+          </footer>
+          <p class="shortcut-hint">1 2 3 4　/　Q W E R　/　A S D F　　SPACE：試聴 / 再生・一時停止　　ESC：停止</p>
+        </div>
+        <aside class="volume-rail" aria-label="全体の音量">
+          <label for="volume">VOLUME</label>
+          <output id="volumeOut" for="volume">75%</output>
+          <div class="volume-fader">
+            <span class="fader-top" aria-hidden="true">100</span>
+            <input id="volume" type="range" min="0" max="100" step="any" value="75" aria-valuetext="75%" aria-orientation="vertical" orient="vertical">
+            <span class="fader-bottom" aria-hidden="true">0</span>
+          </div>
+          <button class="mute" id="mute" aria-label="ミュート" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="speakerWaves" d="M17 8c3 2 3 6 0 8m3-11c5 4 5 10 0 14"/></svg></button>
+        </aside>
+      </div>
+      <section class="overlay hidden" id="funcPanel" role="dialog" aria-modal="true" aria-labelledby="funcTitle" tabindex="-1">
+        <header>
+          <h2 id="funcTitle">メニュー</h2>
+          <button class="button" id="closeFunc">閉じる</button>
+        </header>
+        <div class="menu-actions">
+          <button id="toggleWaveform" aria-pressed="true"><span id="waveformToggleLabel">波形表示：オン</span><small>再生・取り込みモードの表示を切り替え。編集モードは常時表示</small></button>
+          <button id="exportProject">バックアップを保存<small>音源と設定を1つの .sx12 ファイルに保存</small></button>
+          <button id="loadProject">バックアップを読み込む<small>新形式・以前のバックアップに対応</small></button>
+          <button id="recoverAudio">音声を復旧<small>再生を止めて音声を準備し直します。音源と設定は保持します。</small></button>
+          <button id="installApp">ホーム画面への追加<small>iPhoneにアプリとして追加する手順</small></button>
+          <button id="checkAppUpdate"><span id="appUpdateLabel">アプリの更新を確認</span><small id="appUpdateNote">再生を続けたまま確認できます</small></button>
+          <button id="helpButton">使い方<small>取り込み・編集・演奏について</small></button>
+        </div>
+        <p class="menu-note" id="pwaStatus" role="status" aria-live="polite">オフライン起動の準備中…</p>
+        <p class="menu-note">音源と設定はこの端末に自動保存します。ホーム画面から起動したアプリで音源を取り込んでください。移行や別端末への引き継ぎは「バックアップを保存・読み込む」を使います。</p>
+      </section>
+      <section class="overlay hidden" id="backupPanel" role="dialog" aria-modal="true" aria-labelledby="backupTitle" tabindex="-1">
+        <header><h2 id="backupTitle">バックアップを保存</h2><button class="button" id="closeBackup">閉じる</button></header>
+        <p>下のリンクをタップし、開いた画面の共有メニューに「ファイルに保存」があれば選んでください。iOS 12では端末や起動方法によって保存できない場合があります。保存できたことを確認するまで、この画面を閉じないでください。</p>
+        <p><a class="button" id="backupLink" target="_blank" rel="noopener">バックアップを開く・保存</a></p>
+      </section>
+      <section class="overlay hidden" id="helpPanel" role="dialog" aria-modal="true" aria-labelledby="helpTitle" tabindex="-1">
+        <header>
+          <h2 id="helpTitle">使い方</h2>
+          <button class="button" id="closeHelp">戻る</button>
+        </header>
+        <div class="help-content">
+          <h3>iPhoneのホーム画面に追加</h3>
+          <p>このページのHTTPSのURLをSafariで開き、共有メニューから「ホーム画面に追加」を選びます。「Webアプリとして開く」が表示されたらオンにして「追加」を押してください。ホーム画面の「サンプラー」から起動し、一度オンラインのままメニューに「オフライン準備済み」と出るまで待ってください。その後は通信がなくても起動・演奏できます。</p>
+          <p>初回は「再生」モードをタップして音を有効にしてください。元のHTMLやSafari側の音源を移す場合は、元のサンプラーでバックアップを保存し、ホーム画面のアプリで読み込んでください。音源の取り込みはアプリを追加した後に行うと確実です。</p>
+          <h3>アプリの更新と音源の保存</h3>
+          <p>更新がある場合は、メニューの「保存して更新を適用」から再起動できます。更新の適用時は再生が止まります。音源と設定を保存してから更新し、自動で再読み込みはしません。保存済み音源はサーバーに送信しません。端末の空き容量やサイトデータの削除で保存内容が消える場合があるため、大切な音源は .sx12 のバックアップも残してください。バックグラウンドや画面ロック中の再生継続はiOSの動作に依存します。</p>
+          <h3>再生モード</h3>
+          <p>パッドを押すと再生します。iPhoneでは、演奏前に「再生」モードを一度タップすると音を有効にできます。再生中のパッドだけが光ります。取り込みモード・バンク・メニューを切り替えても再生は続きます。編集モードでは選択パッドの最新の1音だけを残します。GATEは押している間だけ再生、LOOPは繰り返し再生。両方ONにすると押している間だけ繰り返します。LOOPのみONでは同じパッドをもう一度押すと停止します。</p>
+          <h3>再生中の波形</h3>
+          <p>波形表示がオンの場合、グラフを常時表示します。選択中のパッドを再生すると音源全体の波形が現れ、縦線が現在の再生位置を示します。再生・取り込みモードの再生終了・停止時は波形と縦線を隠し、薄い枠と中央の横線だけの表示に戻ります。再生・取り込みモードでは、波形表示をオフにすると再生中も上部は空白になります。同じパッドの音が重なった場合は最後に開始した音を追跡します。3点メニューの「波形表示」で表示・非表示を切り替えられ、設定は次回も保持します。</p>
+          <h3>取り込みモード</h3>
+          <p>パッドをタップして音声ファイルを1つ選びます。iPhoneでは「ファイル」から音源を選択してください。取り込みでは音を鳴らさず、そのパッドに割り当てて自動保存します。試聴ボタンで確認できます。ファイルをパッドへドロップしても取り込めます。<strong>1音源10分以内・200MB以内</strong>。音声形式はブラウザの対応範囲で読み込めます。取り込みを取り消した場合、元の音源は変わりません。</p>
+          <h3>編集モード</h3>
+          <p>パッドを押して編集する音源を選びます。音源名・再生範囲・サンプル音量・ピッチを調整できます。サンプル音量を変えると波形の高さも変わり、再生中の上部波形にも適用した音量が反映されます。波形のハンドルはドラッグか矢印キーで移動できます。Shift＋矢印で大きく移動。音源は元のデータを保持し、「編集をリセット」で元の再生範囲に戻せます。小さい画面では編集欄をスクロールしてください。編集モードでは同時に1音だけを再生します。別のパッド・バンクを選ぶと前の再生は止まります。LOOP・GATEは表示せず、再生にも適用しません。音源名の下の数字は元音源上の再生位置を小数点3桁の秒数で示します。「再生」ボタンを押すと現在位置から再生します。再生中は「一時停止」に切り替わり、押すと位置を保持して音を止めます。もう一度「再生」を押すと同じ位置から続けます。停止・再生終了時はトリム開始位置に戻ります。編集モードでは、波形表示設定にかかわらず停止中も上部に選択音源の波形を表示します。上部の波形をタップ・ドラッグして、開始・終了位置の範囲内で再生位置を変更できます。ドラッグ中は音を止め、再生中だった場合だけ指を離すと再開します。停止・一時停止中は音を鳴らさず位置だけ変更します。変更した位置から再生できます。上部の波形にフォーカスすると矢印で0.01秒、Shift＋矢印で0.1秒、Home/Endで範囲の先頭/末尾へ移動できます。位置移動は音源データや開始・終了位置を変更しません。再生・取り込みモードの上部波形は表示専用です。</p>
+          <h3>iPhoneで音が出ないとき</h3>
+          <p>対応ブラウザでは消音モード中も再生できるように設定します。メディア音量が0の場合は、演奏中にiPhoneの音量ボタンで上げてください。音が出なくなったら、メニューの「音声を復旧」で準備し直せます。音源と設定は保持します。消音モード中の再生設定に対応していないブラウザでは、端末の消音モードをオフにしてください。</p>
+          <h3>Volume と保存</h3>
+          <p>右の縦Volumeバーは全体の音量、編集モードのサンプル音量は選択音源だけの音量です。上に動かすほど大きくなります。スピーカーボタンでミュートできます。自動保存に加え、メニューからバックアップも残せます。ブラウザのデータ削除やプライベートモードでは自動保存が失われる場合があります。</p>
+          <h3>バックアップ</h3>
+          <p>音源と設定を1つの .sx12 ファイルに保存します。展開済み音声の合計は512MiBまでです。新しいバックアップは、このPWA版または更新後のサンプラー.htmlで読み込んでください。以前の .sx12・JSONバックアップも読み込めます。保存・復元中は進捗が表示されます。破損や読み込み失敗の場合は現在の音源を保持します。大きなバックアップの保存・復元には端末のメモリも必要です。</p>
+          <h3>画面の切り替え</h3>
+          <p>別のタブへ移ってもアプリから音を止めません。端末やブラウザが音声を一時停止した場合は、戻ったときに再開を試みます。ページの再読み込みや終了では再生が止まります。</p>
+          <h3>キーボード</h3>
+          <p><kbd>1 2 3 4</kbd><br><kbd>Q W E R</kbd><br><kbd>A S D F</kbd><br>パッドと同じ配置です。再生モードでは演奏、取り込みモードではファイル選択、編集モードでは音源選択になります。取り込みモードではSpaceで試聴、編集モードではSpaceで再生・一時停止を切り替えます。Escは全音停止です。</p>
+        </div>
+      </section>
+      <div class="toast hidden" id="toast" role="status"></div>
+      <div class="busy-overlay" id="busyOverlay" role="status" aria-live="polite">保存した音源を復元中…</div>
+    </main>
+    <input type="file" id="audioFiles" accept="audio/*,.wav,.mp3,.m4a,.aif,.aiff,.ogg,.flac" class="sr-only" tabindex="-1">
+    <input type="file" id="projectFile" class="sr-only" accept=".sx12,.json,application/json,application/octet-stream" tabindex="-1" aria-label="バックアップファイルを選択">
+    <script src="./js/boot.js"></script>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>

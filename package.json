@@ -1,0 +1,9 @@
+{
+  "name": "sx12-sampler-pwa",
+  "version": "1.0.8",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules --test tests/*.test.mjs"
+  }
+}
